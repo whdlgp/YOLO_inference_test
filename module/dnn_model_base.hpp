@@ -1,31 +1,65 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/dnn.hpp>
-
 #include <any>
 #include <vector>
+#include <cstdint>
+#include <string>
 
-// Basic model class interface
-class DNNModel
+
+// Basic object detection model class interface
+class ObjectDetection
 {
 public:
     using InitParams = std::any;
 
-    virtual ~DNNModel() {}
+    virtual ~ObjectDetection() {}
+
+    // Input form
+    class Input
+    {
+    public:
+        int width;
+        int height;
+        int chan;
+        std::vector<uint8_t> data;
+    };
+
+    // Output form
+    class Output
+    {
+    public:
+        int bbox_x;
+        int bbox_y;
+        int bbox_width;
+        int bbox_height;
+        int class_id;
+        std::string class_name;
+        float confidence;
+    };
 
     // Initialize the model
-    virtual void init(const InitParams &model_files, float confidence_threshold = 0.5, float nms_threshold = 0.4) = 0;
+    virtual void init(const InitParams &model_files
+                    , float confidence_threshold = 0.5
+                    , float nms_threshold = 0.4
+                    , int inference_width = 608
+                    , int inference_height = 608)
+    {
+        this->confidence_threshold = confidence_threshold;
+        this->nms_threshold = nms_threshold;
+        this->inference_width = inference_width;
+        this->inference_height = inference_height;
 
-    // Preprocess the image
-    virtual cv::Mat preprocess(const cv::Mat &image) = 0;
+        // Add your model imple initialization
+    }
 
     // Perform inference
-    virtual std::vector<cv::Mat> infer(const cv::Mat &blob) = 0;
+    virtual std::vector<Output> infer(Input& input) = 0;
+protected:
+    float confidence_threshold = 0.5;
+    float nms_threshold = 0.4;
+    int inference_width = 608;
+    int inference_height = 608;
 
-    // Postprocess the inference results
-    virtual void postprocess(const cv::Mat &frame, const std::vector<cv::Mat> &outs) = 0;
-
-    // Utility function to draw the results
-    virtual void draw_results(cv::Mat &frame) = 0;
+    std::vector<std::string> class_names;
+    int num_classes = 0;
 };

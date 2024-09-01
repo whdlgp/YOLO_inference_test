@@ -1,12 +1,16 @@
 #include "dnn_model_darknet.hpp"
 
 #include <fstream>
+#include <opencv2/opencv.hpp>
 
-void DarknetModel::init(const InitParams &model_files, float confidence_threshold, float nms_threshold)
+void DarknetModel::init(const InitParams &model_files
+                        , float confidence_threshold
+                        , float nms_threshold
+                        , int inference_width
+                        , int inference_height)
 {
-    // Set confidence threshold, NMS threshold, and number of colors
-    this->confidence_threshold = confidence_threshold;
-    this->nms_threshold = nms_threshold;
+    // Set confidence threshold, NMS threshold, width, height
+    ObjectDetection::init(model_files, confidence_threshold, nms_threshold, inference_width, inference_height);
 
     if (model_files.type() == typeid(std::tuple<std::string, std::string, std::string>))
     {
@@ -37,11 +41,50 @@ void DarknetModel::init(const InitParams &model_files, float confidence_threshol
     }
 }
 
+// Perform inference
+std::vector<ObjectDetection::Output> DarknetModel::infer(ObjectDetection::Input& input)
+{
+    // Convert to OpenCV Mat
+    cv::Mat image = convert_to_Mat(input);
+
+    // BGR24 to NCHW (N = 1)
+    cv::Mat blob = preprocess(image);
+
+    // Inference
+    std::vector<cv::Mat> results = infer(blob);
+
+    // Post process
+    std::vector<ObjectDetection::Output> outputs = postprocess(image, results);
+
+    return outputs;
+}
+
+// Convert Object Detection input to cv::Mat
+cv::Mat DarknetModel::convert_to_Mat(const ObjectDetection::Input& input)
+{
+    // CV_8UC3, CV_8UC1 
+    int type = (input.chan == 1) ? CV_8UC1 :
+               (input.chan == 3) ? CV_8UC3 :
+               (input.chan == 4) ? CV_8UC4 : -1;
+    if (type == -1)
+    {
+        throw std::invalid_argument("Unsupported number of channels");
+    }
+
+    // cv::Mat 
+    cv::Mat mat(input.height, input.width, type);
+
+    // data copy
+    std::memcpy(mat.data, input.data.data(), input.data.size() * sizeof(uint8_t));
+
+    return mat;
+}
+
 // Preprocess the image
 cv::Mat DarknetModel::preprocess(const cv::Mat &image)
 {
     cv::Mat blob;
-    cv::dnn::blobFromImage(image, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
+    cv::dnn::blobFromImage(image, blob, 0.00392, cv::Size(this->inference_width, this->inference_height), cv::Scalar(), true, false, CV_32F);
     return blob;
 }
 
@@ -56,12 +99,8 @@ std::vector<cv::Mat> DarknetModel::infer(const cv::Mat &blob)
 }
 
 // Postprocess the inference results
-void DarknetModel::postprocess(const cv::Mat &frame, const std::vector<cv::Mat> &outs)
+std::vector<ObjectDetection::Output> DarknetModel::postprocess(const cv::Mat &frame, const std::vector<cv::Mat> &outs)
 {
-    boxes.clear();
-    class_ids.clear();
-    confidences.clear();
-
     // Initialize vectors to store NMS results
     std::vector<std::vector<int>> indices(num_classes);
     std::vector<std::vector<cv::Rect>> boxes_per_class(num_classes);
@@ -90,6 +129,10 @@ void DarknetModel::postprocess(const cv::Mat &frame, const std::vector<cv::Mat> 
         }
     }
 
+    // Final Result output
+    std::vector<ObjectDetection::Output> final_results;
+    final_results.reserve(20);
+
     // Perform NMS and aggregate the results
     for (int c = 0; c < num_classes; c++)
     {
@@ -97,24 +140,44 @@ void DarknetModel::postprocess(const cv::Mat &frame, const std::vector<cv::Mat> 
 
         for (auto idx : indices[c])
         {
-            boxes.push_back(boxes_per_class[c][idx]);
-            class_ids.push_back(c);
-            confidences.push_back(confidences_per_class[c][idx]);
+            // Create an Output object and populate it
+            ObjectDetection::Output output;
+            output.bbox_x = boxes_per_class[c][idx].x;
+            output.bbox_y = boxes_per_class[c][idx].y;
+            output.bbox_width = boxes_per_class[c][idx].width;
+            output.bbox_height = boxes_per_class[c][idx].height;
+            output.class_id = c;
+            output.class_name = class_names[c];
+            output.confidence = confidences_per_class[c][idx];
+
+            // Add the Output object to the outputs vector
+            final_results.push_back(output);
         }
     }
+
+    return final_results;
 }
 
 // Utility function to draw the results
-void DarknetModel::draw_results(cv::Mat &frame)
+void DarknetModel::draw(cv::Mat &frame, std::vector<ObjectDetection::Output> output)
 {
-    for (size_t i = 0; i < boxes.size(); ++i)
+    // colors for bounding boxes
+    const int num_colors = 4;
+    const cv::Scalar colors[4] = {
+        {0, 255, 255},
+        {255, 255, 0},
+        {0, 255, 0},
+        {255, 0, 0}
+    };
+
+    for (size_t i = 0; i < output.size(); ++i)
     {
-        const auto color = colors[class_ids[i] % num_colors];
-        const auto& rect = boxes[i];
+        const auto color = colors[output[i].class_id % num_colors];
+        const auto& rect = cv::Rect(output[i].bbox_x, output[i].bbox_y, output[i].bbox_width, output[i].bbox_height);
         cv::rectangle(frame, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 3);
 
         std::ostringstream label_ss;
-        label_ss << class_names[class_ids[i]] << ": " << std::fixed << std::setprecision(2) << confidences[i];
+        label_ss << output[i].class_name << ": " << std::fixed << std::setprecision(2) << output[i].confidence;
         auto label = label_ss.str();
         
         int baseline;
