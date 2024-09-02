@@ -7,11 +7,12 @@
 #include <any>
 
 #include "module/dnn_model_darknet.hpp"
+#include "module/dnn_model_yolov5.hpp"
 
 namespace fs = std::filesystem;
 
 
-int main()
+void test_darknet()
 {
     // Model and Image directories
     fs::path models_dir = "models";
@@ -55,6 +56,56 @@ int main()
     cv::namedWindow("output");
     cv::imshow("output", img);
     cv::waitKey(0);
+}
 
+void test_yolov5_onnx()
+{
+    // Model and Image directories
+    fs::path models_dir = "models";
+    fs::path images_dir = "images";
+
+    // Model files
+    fs::path onnx_file = models_dir / "yolov5" / "yolov5l.onnx";
+    fs::path names_file = models_dir / "yolov5" / "coco.names";
+
+    // Image file
+    fs::path image_file = images_dir / "dog.jpg";
+
+    // Initialize Darknet model
+    YOLOv5Model model;
+    model.init(ObjectDetection::InitParams(std::make_tuple(onnx_file.string(), names_file.string())), 0.5f, 0.4f, 640, 640);
+
+    // Load the image
+    cv::Mat img = cv::imread(image_file.string());
+    ObjectDetection::Input input;
+    input.chan = img.channels();
+    input.height = img.rows;
+    input.width = img.cols;
+    input.data.resize(input.chan*input.height*input.width);
+    std::memcpy(input.data.data(), img.data, input.data.size());
+
+    auto outputs = model.infer(input);
+
+    // Print the outputs
+    for (const auto& output : outputs)
+    {
+        std::cout << "Bounding Box: (" << output.bbox_x << ", " << output.bbox_y << "), "
+                  << "Width: " << output.bbox_width << ", Height: " << output.bbox_height << ", "
+                  << "Class Name: " << output.class_name << ", "
+                  << "Confidence: " << output.confidence << std::endl;
+    }
+
+    DarknetModel::draw(img, outputs);
+    
+    // Display the output
+    cv::namedWindow("output");
+    cv::imshow("output", img);
+    cv::waitKey(0);
+}
+
+int main()
+{
+    //test_darknet();
+    test_yolov5_onnx();
     return 0;
 }

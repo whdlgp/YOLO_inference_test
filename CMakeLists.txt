@@ -18,11 +18,13 @@ set(MAIN_SOURCES
 # Set module directory sources
 set(MODULE_SOURCES
     module/dnn_model_darknet.cpp
+    module/dnn_model_yolov5.cpp
 )
 
 set(MODULE_HEADERS
     module/dnn_model_base.hpp
     module/dnn_model_darknet.hpp
+    module/dnn_model_yolov5.hpp
 )
 
 # Create the executable
