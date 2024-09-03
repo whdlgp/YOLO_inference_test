@@ -1,0 +1,16 @@
+YOLO v4, CSP(Scaled YOLO v4) (Darknet)
+https://github.com/AlexeyAB/darknet/releases/tag/yolov4
+
+YOLO v5 (ONNX)
+https://github.com/ultralytics/yolov5/releases/tag/v7.0
+
+YOLO v6 (ONNX)
+https://github.com/meituan/YOLOv6/releases/tag/0.3.0
+
+YOLO v7 (Darknet)
+https://github.com/AlexeyAB/darknet/issues/8595
+
+YOLO v8 (ONNX, need convert)
+https://huggingface.co/Ultralytics/YOLOv8
+colab
+https://colab.research.google.com/github/ultralytics/ultralytics/blob/main/examples/tutorial.ipynb
