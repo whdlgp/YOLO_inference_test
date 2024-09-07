@@ -12,5 +12,16 @@ https://github.com/AlexeyAB/darknet/issues/8595
 
 YOLO v8 (ONNX, need convert)
 https://huggingface.co/Ultralytics/YOLOv8
-colab
+colab (Official)
 https://colab.research.google.com/github/ultralytics/ultralytics/blob/main/examples/tutorial.ipynb
+
+YOLO v9 (ONNX, need convert)
+https://github.com/WongKinYiu/yolov9
+colab (I made for converting)
+https://gist.github.com/whdlgp/bec49d62ddc72c9464817365c4cc7fbc
+
+YOLOv10 (ONNX, need custom model, need convert)
+https://github.com/THU-MIG/yolov10
+Above not work for OpenCV 4.10.0. You need special version, https://docs.opencv.org/4.x/da/d9d/tutorial_dnn_yolo.html
+colab (I made for converting from OpenCV's YOLOv10 custom version)
+https://gist.github.com/whdlgp/f69b0c40728a2d75f564cb0d37715993
