@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 
+#include "util.hpp"
 
 // Basic object detection model class interface
 class ObjectDetection
@@ -38,16 +39,16 @@ public:
     };
 
     // Initialize the model
-    virtual void init(const InitParams &model_files
-                    , float confidence_threshold = 0.5
-                    , float nms_threshold = 0.4
-                    , int inference_width = 608
-                    , int inference_height = 608)
+    virtual void init(nlohmann::json init_params)
     {
-        this->confidence_threshold = confidence_threshold;
-        this->nms_threshold = nms_threshold;
-        this->inference_width = inference_width;
-        this->inference_height = inference_height;
+        if(!check_and_get(init_params, "confidence_threshold", this->confidence_threshold))
+            throw std::invalid_argument("wrong confidence_threshold");
+        if(!check_and_get(init_params, "nms_threshold", this->nms_threshold))
+            throw std::invalid_argument("wrong nms_threshold");
+        if(!check_and_get(init_params, "inference_width", this->inference_width))
+            throw std::invalid_argument("wrong inference_width");
+        if(!check_and_get(init_params, "inference_height", this->inference_height))
+            throw std::invalid_argument("wrong inference_height");
 
         // Add your model imple initialization
     }

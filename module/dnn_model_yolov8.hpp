@@ -8,11 +8,7 @@ class YOLOv8Model : public ObjectDetection
 {
 public:
     // Initialize the model
-    void init(const InitParams &model_files
-            , float confidence_threshold = 0.5f
-            , float nms_threshold = 0.4f
-            , int inference_width = 608
-            , int inference_height = 608) override;
+    void init(nlohmann::json init_params) override;
 
     // Perform inference
     virtual std::vector<Output> infer(Input& input) override;

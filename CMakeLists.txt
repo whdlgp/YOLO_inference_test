@@ -35,6 +35,10 @@ set(MODULE_HEADERS
     module/dnn_model_yolov10.hpp
 )
 
+set(EXTRA_HEADERS
+    extra/json.hpp
+)
+
 # Create the executable
 add_executable(${PROJECT_NAME} ${MAIN_SOURCES} ${MODULE_SOURCES})
 
@@ -43,7 +47,7 @@ target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 
 # Include directories
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(module)
+include_directories(module, extra)
 
 # Set the output directory for the built executable to the testspace directory located at the same level as CMakeLists.txt
 set_target_properties(${PROJECT_NAME}

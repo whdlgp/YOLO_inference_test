@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
+#include "extra/json.hpp"
 
 #include <vector>
 #include <fstream>
@@ -15,6 +16,7 @@
 
 
 namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 
 void test_yolov4_darknet()
@@ -33,7 +35,15 @@ void test_yolov4_darknet()
 
     // Initialize model
     DarknetModel model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(config_file.string(), weights_file.string(), names_file.string())), 0.5f, 0.4f, 416, 416);
+    json init_param;
+    init_param["config_path"] = config_file.string();
+    init_param["weights_path"] = weights_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 416;
+    init_param["inference_height"] = 416;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -58,8 +68,8 @@ void test_yolov4_darknet()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov4");
+    cv::imshow("yolov4", img);
     cv::waitKey(0);
 }
 
@@ -78,7 +88,14 @@ void test_yolov5_onnx()
 
     // Initialize model
     YOLOv5Model model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(onnx_file.string(), names_file.string())), 0.5f, 0.4f, 640, 640);
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -103,8 +120,8 @@ void test_yolov5_onnx()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov5");
+    cv::imshow("yolov5", img);
     cv::waitKey(0);
 }
 
@@ -123,7 +140,14 @@ void test_yolov6_onnx()
 
     // Initialize model
     YOLOv6Model model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(onnx_file.string(), names_file.string())), 0.5f, 0.4f, 640, 640);
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -148,8 +172,8 @@ void test_yolov6_onnx()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov6");
+    cv::imshow("yolov6", img);
     cv::waitKey(0);
 }
 
@@ -169,7 +193,15 @@ void test_yolov7_darknet()
 
     // Initialize model
     DarknetModel model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(config_file.string(), weights_file.string(), names_file.string())), 0.5f, 0.4f, 416, 416);
+    json init_param;
+    init_param["config_path"] = config_file.string();
+    init_param["weights_path"] = weights_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 416;
+    init_param["inference_height"] = 416;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -194,8 +226,8 @@ void test_yolov7_darknet()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov7");
+    cv::imshow("yolov7", img);
     cv::waitKey(0);
 }
 
@@ -214,7 +246,14 @@ void test_yolov8_onnx()
 
     // Initialize model
     YOLOv8Model model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(onnx_file.string(), names_file.string())), 0.5f, 0.4f, 640, 640);
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -239,8 +278,8 @@ void test_yolov8_onnx()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov8");
+    cv::imshow("yolov8", img);
     cv::waitKey(0);
 }
 
@@ -259,7 +298,14 @@ void test_yolov9_onnx()
 
     // Initialize model
     YOLOv9Model model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(onnx_file.string(), names_file.string())), 0.5f, 0.4f, 640, 640);
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -284,8 +330,8 @@ void test_yolov9_onnx()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov9");
+    cv::imshow("yolov9", img);
     cv::waitKey(0);
 }
 
@@ -304,7 +350,14 @@ void test_yolov10_onnx()
 
     // Initialize model
     YOLOv10Model model;
-    model.init(ObjectDetection::InitParams(std::make_tuple(onnx_file.string(), names_file.string())), 0.5f, 0.4f, 640, 640);
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+    model.init(init_param);
 
     // Load the image
     cv::Mat img = cv::imread(image_file.string());
@@ -329,19 +382,19 @@ void test_yolov10_onnx()
     DarknetModel::draw(img, outputs);
     
     // Display the output
-    cv::namedWindow("output");
-    cv::imshow("output", img);
+    cv::namedWindow("yolov10");
+    cv::imshow("yolov10", img);
     cv::waitKey(0);
 }
 
 int main()
 {
-    //test_yolov4_darknet();
-    //test_yolov5_onnx();
-    //test_yolov6_onnx();
-    //test_yolov7_darknet();
-    //test_yolov8_onnx();
-    //test_yolov9_onnx();
+    test_yolov4_darknet();
+    test_yolov5_onnx();
+    test_yolov6_onnx();
+    test_yolov7_darknet();
+    test_yolov8_onnx();
+    test_yolov9_onnx();
     test_yolov10_onnx();
 
     return 0;

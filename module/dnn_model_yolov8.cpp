@@ -3,42 +3,38 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-void YOLOv8Model::init(const InitParams &model_files
-                        , float confidence_threshold
-                        , float nms_threshold
-                        , int inference_width
-                        , int inference_height)
+void YOLOv8Model::init(nlohmann::json init_params)
 {
     // Set confidence threshold, NMS threshold, width, height
-    ObjectDetection::init(model_files, confidence_threshold, nms_threshold, inference_width, inference_height);
+    ObjectDetection::init(init_params);
 
-    if (model_files.type() == typeid(std::tuple<std::string, std::string>))
+    std::string onnx_path, names_file;
+    if(!check_and_get(init_params, "onnx_path", onnx_path))
+        throw std::invalid_argument("wrong onnx_path");
+    if(!check_and_get(init_params, "names_file", names_file))
+        throw std::invalid_argument("wrong names_file");
+
+    // Load Net
+    net = cv::dnn::readNetFromONNX(onnx_path);
+    net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
+
+    // Load class names
+    std::ifstream class_file(names_file);
+    if (!class_file)
     {
-        auto [onnx_path, names_file] = std::any_cast<std::tuple<std::string, std::string>>(model_files);
-        net = cv::dnn::readNetFromONNX(onnx_path);
-        net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-        net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
-
-        // Load class names
-        std::ifstream class_file(names_file);
-        if (!class_file)
-        {
-            throw std::runtime_error("failed to open classes.txt");
-        }
-
-        std::string line;
-        while (std::getline(class_file, line))
-        {
-            class_names.push_back(line);
-        }
-
-        // Set the number of classes based on the size of class_names
-        num_classes = static_cast<int>(class_names.size());
+        throw std::runtime_error("failed to open classes.txt");
     }
-    else
+
+    // Load class names file
+    std::string line;
+    while (std::getline(class_file, line))
     {
-        throw std::logic_error("Darknet model requires config, weights, and class names paths");
+        class_names.push_back(line);
     }
+
+    // Set the number of classes based on the size of class_names
+    num_classes = static_cast<int>(class_names.size());
 }
 
 // Perform inference
