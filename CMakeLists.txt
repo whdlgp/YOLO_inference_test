@@ -17,22 +17,25 @@ set(MAIN_SOURCES
 
 # Set module directory sources
 set(MODULE_SOURCES
-    module/dnn_model_darknet.cpp
-    module/dnn_model_yolov5.cpp
-    module/dnn_model_yolov6.cpp
-    module/dnn_model_yolov8.cpp
-    module/dnn_model_yolov9.cpp
-    module/dnn_model_yolov10.cpp
-)
-
-set(MODULE_HEADERS
+    module/util.cpp
+    module/util.hpp
     module/dnn_model_base.hpp
+    module/dnn_model_darknet.cpp
     module/dnn_model_darknet.hpp
+    module/dnn_model_yolov5.cpp
     module/dnn_model_yolov5.hpp
+    module/dnn_model_yolov6.cpp
     module/dnn_model_yolov6.hpp
+    module/dnn_model_yolov8.cpp
     module/dnn_model_yolov8.hpp
+    module/dnn_model_yolov9.cpp
     module/dnn_model_yolov9.hpp
+    module/dnn_model_yolov10.cpp
     module/dnn_model_yolov10.hpp
+    module/backend_opencv_onnx.cpp
+    module/backend_opencv_onnx.hpp
+    module/postprocessor_yolov5.cpp
+    module/postprocessor_yolov5.hpp
 )
 
 set(EXTRA_HEADERS

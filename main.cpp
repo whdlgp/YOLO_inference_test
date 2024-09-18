@@ -14,6 +14,9 @@
 #include "module/dnn_model_yolov9.hpp"
 #include "module/dnn_model_yolov10.hpp"
 
+#include "module/backend_opencv_onnx.hpp"
+#include "module/postprocessor_yolov5.hpp"
+
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -387,15 +390,95 @@ void test_yolov10_onnx()
     cv::waitKey(0);
 }
 
+void test()
+{
+        // Model and Image directories
+    fs::path models_dir = "models";
+    fs::path images_dir = "images";
+
+    // Model files
+    fs::path onnx_file = models_dir / "yolov5" / "yolov5l.onnx";
+    fs::path names_file = models_dir / "yolov5" / "coco.names";
+
+    // Image file
+    fs::path image_file = images_dir / "dog.jpg";
+
+    // Load the image
+    cv::Mat img = cv::imread(image_file.string());
+
+    // Convert to Image class
+    Image input;
+    input.width = img.cols;
+    input.height = img.rows;
+    input.chan = img.channels();
+    input.data.resize(input.total());
+    std::memcpy(input.data.data(), img.data, input.data.size());
+
+    // Initialize model
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+
+    auto model = make_yolov5();
+    model->init(init_param);
+    
+    // Inference and Post Process
+    auto detections = model->run(input);
+
+    // Print the outputs
+    for (const auto& output : detections)
+    {
+        std::cout << "Bounding Box: (" << output.bbox_x << ", " << output.bbox_y << "), "
+                  << "Width: " << output.bbox_width << ", Height: " << output.bbox_height << ", "
+                  << "Class Name: " << output.class_name << ", "
+                  << "Confidence: " << output.confidence << std::endl;
+    }
+
+    // colors for bounding boxes
+    const int num_colors = 4;
+    const cv::Scalar colors[4] = {
+        {0, 255, 255},
+        {255, 255, 0},
+        {0, 255, 0},
+        {255, 0, 0}
+    };
+
+    for (size_t i = 0; i < detections.size(); ++i)
+    {
+        const auto color = colors[detections[i].class_id % num_colors];
+        const auto& rect = cv::Rect(detections[i].bbox_x, detections[i].bbox_y, detections[i].bbox_width, detections[i].bbox_height);
+        cv::rectangle(img, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 3);
+
+        std::ostringstream label_ss;
+        label_ss << detections[i].class_name << ": " << std::fixed << std::setprecision(2) << detections[i].confidence;
+        auto label = label_ss.str();
+        
+        int baseline;
+        auto label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
+        cv::rectangle(img, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
+        cv::putText(img, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
+    }
+    
+    // Display the output
+    cv::namedWindow("test");
+    cv::imshow("test", img);
+    cv::waitKey(0);
+}
+
 int main()
 {
-    test_yolov4_darknet();
-    test_yolov5_onnx();
-    test_yolov6_onnx();
-    test_yolov7_darknet();
-    test_yolov8_onnx();
-    test_yolov9_onnx();
-    test_yolov10_onnx();
+    //test_yolov4_darknet();
+    //test_yolov5_onnx();
+    //test_yolov6_onnx();
+    //test_yolov7_darknet();
+    //test_yolov8_onnx();
+    //test_yolov9_onnx();
+    //test_yolov10_onnx();
+    test();
 
     return 0;
 }

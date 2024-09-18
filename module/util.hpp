@@ -31,3 +31,22 @@ bool check_and_get(const nlohmann::json& input, const std::string& key, T& value
     }
     return false;
 }
+
+// Define a simple struct to represent bounding boxes
+class BoundingBox
+{
+public:
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+};
+
+// Intersection over Union (IoU) calculation
+float IoU(const BoundingBox& box1, const BoundingBox& box2);
+
+// Custom Non-Maximum Suppression (NMS) function
+std::vector<int> nonMaximumSuppression(
+    const std::vector<BoundingBox>& boxes,
+    const std::vector<float>& confidences,
+    float nms_threshold);
