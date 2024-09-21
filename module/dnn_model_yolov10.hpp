@@ -3,6 +3,20 @@
 #include "dnn_model_base.hpp"
 #include "opencv2/dnn.hpp"
 
+#include "backend_opencv_onnx.hpp"
+#include "postprocessor_yolov10.hpp"
+
+inline std::shared_ptr<DetectionBase> make_yolov10()
+{
+    // Backend
+    std::unique_ptr<BackendBase<float>> backend = std::make_unique<BackendOpenCVONNX>();
+
+    // Post Processor
+    std::unique_ptr<PostProcessor<float>> postproc = std::make_unique<PostProcessorYOLOv10>();
+
+    return std::make_shared<DetectionBase>(std::move(backend), std::move(postproc));
+}
+
 // YOLOv10Model model class(ONNX)
 class YOLOv10Model : public ObjectDetection
 {

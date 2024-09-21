@@ -392,13 +392,21 @@ void test_yolov10_onnx()
 
 void test()
 {
-        // Model and Image directories
+    // Model and Image directories
     fs::path models_dir = "models";
     fs::path images_dir = "images";
 
     // Model files
-    fs::path onnx_file = models_dir / "yolov5" / "yolov5l.onnx";
-    fs::path names_file = models_dir / "yolov5" / "coco.names";
+    //fs::path onnx_file = models_dir / "yolov5" / "yolov5l.onnx";
+    //fs::path names_file = models_dir / "yolov5" / "coco.names";
+    //fs::path onnx_file = models_dir / "yolov6" / "yolov6l.onnx";
+    //fs::path names_file = models_dir / "yolov6" / "coco.names";
+    //fs::path onnx_file = models_dir / "yolov8" / "yolov8l.onnx";
+    //fs::path names_file = models_dir / "yolov8" / "coco.names";
+    //fs::path onnx_file = models_dir / "yolov9" / "yolov9-c-converted.onnx";
+    //fs::path names_file = models_dir / "yolov9" / "coco.names";
+    fs::path onnx_file = models_dir / "yolov10" / "yolov10s.onnx";
+    fs::path names_file = models_dir / "yolov10" / "coco.names";
 
     // Image file
     fs::path image_file = images_dir / "dog.jpg";
@@ -423,7 +431,7 @@ void test()
     init_param["inference_width"] = 640;
     init_param["inference_height"] = 640;
 
-    auto model = make_yolov5();
+    auto model = make_yolov10();
     model->init(init_param);
     
     // Inference and Post Process

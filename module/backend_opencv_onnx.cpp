@@ -15,8 +15,8 @@ void BackendOpenCVONNX::init(nlohmann::json init_params)
     
     // Load Net (OpenCV DNN)
     net = cv::dnn::readNetFromONNX(onnx_path);
-    net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
+    net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+    net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 }
 
 // Perform inference

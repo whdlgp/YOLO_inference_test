@@ -1,7 +1,24 @@
 #pragma once
 
 #include "dnn_model_base.hpp"
-#include "opencv2/dnn.hpp"
+
+#include <memory>
+#include <opencv2/dnn.hpp>
+
+#include "backend_opencv_onnx.hpp"
+#include "postprocessor_yolov5.hpp"
+
+inline std::shared_ptr<DetectionBase> make_yolov6()
+{
+    // Backend
+    std::unique_ptr<BackendBase<float>> backend = std::make_unique<BackendOpenCVONNX>();
+
+    // Post Processor
+    // YOLO v6 have save process of post processor
+    std::unique_ptr<PostProcessor<float>> postproc = std::make_unique<PostProcessorYOLOv5>();
+
+    return std::make_shared<DetectionBase>(std::move(backend), std::move(postproc));
+}
 
 // YOLOv6Model model class(ONNX)
 class YOLOv6Model : public ObjectDetection

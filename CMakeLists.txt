@@ -17,7 +17,6 @@ set(MAIN_SOURCES
 
 # Set module directory sources
 set(MODULE_SOURCES
-    module/util.cpp
     module/util.hpp
     module/dnn_model_base.hpp
     module/dnn_model_darknet.cpp
@@ -36,6 +35,10 @@ set(MODULE_SOURCES
     module/backend_opencv_onnx.hpp
     module/postprocessor_yolov5.cpp
     module/postprocessor_yolov5.hpp
+    module/postprocessor_yolov8.cpp
+    module/postprocessor_yolov8.hpp
+    module/postprocessor_yolov10.cpp
+    module/postprocessor_yolov10.hpp
 )
 
 set(EXTRA_HEADERS

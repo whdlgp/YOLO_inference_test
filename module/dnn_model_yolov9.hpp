@@ -3,6 +3,21 @@
 #include "dnn_model_base.hpp"
 #include "opencv2/dnn.hpp"
 
+#include "backend_opencv_onnx.hpp"
+#include "postprocessor_yolov8.hpp"
+
+inline std::shared_ptr<DetectionBase> make_yolov9()
+{
+    // Backend
+    std::unique_ptr<BackendBase<float>> backend = std::make_unique<BackendOpenCVONNX>();
+
+    // Post Processor
+    // YOLO v9 have save process of post processor
+    std::unique_ptr<PostProcessor<float>> postproc = std::make_unique<PostProcessorYOLOv8>();
+
+    return std::make_shared<DetectionBase>(std::move(backend), std::move(postproc));
+}
+
 // YOLOv9Model model class(ONNX)
 class YOLOv9Model : public ObjectDetection
 {
