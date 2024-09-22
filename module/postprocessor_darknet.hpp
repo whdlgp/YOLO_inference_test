@@ -3,7 +3,7 @@
 #include "interface.hpp"
 
 // Imple of Post Process of YOLO v5 Object Detection models
-class PostProcessorYOLOv5 : public PostProcessor<float> 
+class PostProcessorDarknet : public PostProcessor<float> 
 {
 public:
     // Initialize the Post Processor

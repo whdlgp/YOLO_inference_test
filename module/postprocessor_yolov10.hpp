@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dnn_model_base.hpp"
+#include "interface.hpp"
 
 // Imple of Post Process of YOLO v10 Object Detection models
 class PostProcessorYOLOv10 : public PostProcessor<float> 

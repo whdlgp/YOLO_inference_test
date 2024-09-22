@@ -1,7 +1,6 @@
 #include "postprocessor_yolov10.hpp"
 
 #include <fstream>
-#include <iostream>
 
 // Initialize the Post Processor
 void PostProcessorYOLOv10::init(nlohmann::json init_params)

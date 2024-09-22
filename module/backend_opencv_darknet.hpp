@@ -4,8 +4,8 @@
 
 #include <opencv2/dnn.hpp>
 
-// Imple of DNN Inference with OpenCV DNN Module, ONNX
-class BackendOpenCVONNX : public BackendBase<float>
+// Imple of DNN Inference with OpenCV DNN Module, Darknet
+class BackendOpenCVDarknet : public BackendBase<float>
 {
 public:
     // Initialize the model

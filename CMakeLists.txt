@@ -18,31 +18,25 @@ set(MAIN_SOURCES
 # Set module directory sources
 set(MODULE_SOURCES
     module/util.hpp
-    module/dnn_model_base.hpp
-    module/dnn_model_darknet.cpp
-    module/dnn_model_darknet.hpp
-    module/dnn_model_yolov5.cpp
-    module/dnn_model_yolov5.hpp
-    module/dnn_model_yolov6.cpp
-    module/dnn_model_yolov6.hpp
-    module/dnn_model_yolov8.cpp
-    module/dnn_model_yolov8.hpp
-    module/dnn_model_yolov9.cpp
-    module/dnn_model_yolov9.hpp
-    module/dnn_model_yolov10.cpp
-    module/dnn_model_yolov10.hpp
+    module/interface.hpp
+    module/make_models.hpp
     module/backend_opencv_onnx.cpp
     module/backend_opencv_onnx.hpp
+    module/backend_opencv_darknet.cpp
+    module/backend_opencv_darknet.hpp
     module/postprocessor_yolov5.cpp
     module/postprocessor_yolov5.hpp
     module/postprocessor_yolov8.cpp
     module/postprocessor_yolov8.hpp
     module/postprocessor_yolov10.cpp
     module/postprocessor_yolov10.hpp
+    module/postprocessor_darknet.cpp
+    module/postprocessor_darknet.hpp
 )
 
+# Extra libraries
 set(EXTRA_HEADERS
-    extra/json.hpp
+    extra/json.hpp # from https://github.com/nlohmann/json
 )
 
 # Create the executable
