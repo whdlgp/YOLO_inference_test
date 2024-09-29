@@ -86,3 +86,71 @@ inline std::vector<int> non_maximum_suppression(
 
     return indices;
 }
+
+inline std::vector<float> RGB2NCHW_swaprb(const std::vector<uint8_t>& image_data, const int image_width, const int image_height, const int image_channels,
+                                 const int input_width, const int input_height, const float scale_factor, const std::vector<float>& mean)
+{
+    std::vector<float> processed_data(input_width * input_height * 3);
+    const float scale_x = static_cast<float>(image_width) / input_width;
+    const float scale_y = static_cast<float>(image_height) / input_height;
+
+    for (int y = 0; y < input_height; ++y) 
+    {
+        for (int x = 0; x < input_width; ++x) 
+        {
+            const int nearest_x = std::min(static_cast<int>(x * scale_x), image_width - 1);
+            const int nearest_y = std::min(static_cast<int>(y * scale_y), image_height - 1);
+            const int src_idx = (nearest_y * image_width + nearest_x) * image_channels;
+
+            const int dst_idx_r =                                    (y * input_width + x); // Red channel index
+            const int dst_idx_g = (    input_height * input_width) + (y * input_width + x); // Green channel index
+            const int dst_idx_b = (2 * input_height * input_width) + (y * input_width + x); // Blue channel index
+
+            // Swap R and B channels (RGB to BGR)
+            processed_data[dst_idx_r] = (image_data[src_idx + 2] / 255.0f - mean[0]) * scale_factor; // Red
+            processed_data[dst_idx_g] = (image_data[src_idx + 1] / 255.0f - mean[1]) * scale_factor; // Green
+            processed_data[dst_idx_b] = (image_data[src_idx    ] / 255.0f - mean[2]) * scale_factor; // Blue
+        }
+    }
+
+    return processed_data;
+}
+
+inline std::vector<float> RGB2NCHW_no_swaprb(const std::vector<uint8_t>& image_data, const int image_width, const int image_height, const int image_channels,
+                                    const int input_width, const int input_height, const float scale_factor, const std::vector<float>& mean)
+{
+    std::vector<float> processed_data(input_width * input_height * 3);
+    const float scale_x = static_cast<float>(image_width) / input_width;
+    const float scale_y = static_cast<float>(image_height) / input_height;
+
+    for (int y = 0; y < input_height; ++y) 
+    {
+        for (int x = 0; x < input_width; ++x) 
+        {
+            const int nearest_x = std::min(static_cast<int>(x * scale_x), image_width - 1);
+            const int nearest_y = std::min(static_cast<int>(y * scale_y), image_height - 1);
+            const int src_idx = (nearest_y * image_width + nearest_x) * image_channels;
+
+            const int dst_idx_r =                                    (y * input_width + x); // Red channel index
+            const int dst_idx_g = (    input_height * input_width) + (y * input_width + x); // Green channel index
+            const int dst_idx_b = (2 * input_height * input_width) + (y * input_width + x); // Blue channel index
+
+            // No channel swapping
+            processed_data[dst_idx_r] = (image_data[src_idx    ] / 255.0f - mean[0]) * scale_factor; // Red
+            processed_data[dst_idx_g] = (image_data[src_idx + 1] / 255.0f - mean[1]) * scale_factor; // Green
+            processed_data[dst_idx_b] = (image_data[src_idx + 2] / 255.0f - mean[2]) * scale_factor; // Blue
+        }
+    }
+
+    return processed_data;
+}
+
+inline std::vector<float> RGB2NCHW(const std::vector<uint8_t>& image_data, const int image_width, const int image_height, const int image_channels,
+                            const int input_width, const int input_height, const float scale_factor = 1.0f, 
+                            const std::vector<float>& mean = {0.0f, 0.0f, 0.0f}, const bool swap_rb = true)
+{
+    if (swap_rb) 
+        return RGB2NCHW_swaprb(image_data, image_width, image_height, image_channels, input_width, input_height, scale_factor, mean);
+    else 
+        return RGB2NCHW_no_swaprb(image_data, image_width, image_height, image_channels, input_width, input_height, scale_factor, mean);
+}

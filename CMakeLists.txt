@@ -10,6 +10,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Find OpenCV library
 find_package(OpenCV REQUIRED HINTS "/path/to/opencv/build")
 
+# ONNX Runtime
+set(ONNXRUNTIME_DIR "/home/choyg/Desktop/workspace/onnxruntime-linux-x64-gpu-1.19.2")
+set(ONNXRUNTIME_LIB_DIR ${ONNXRUNTIME_DIR}/lib)
+set(ONNXRUNTIME_INCLUDE_DIR ${ONNXRUNTIME_DIR}/include)
+
 # Set main.cpp
 set(MAIN_SOURCES
     main.cpp
@@ -42,11 +47,16 @@ set(EXTRA_HEADERS
 # Create the executable
 add_executable(${PROJECT_NAME} ${MAIN_SOURCES} ${MODULE_SOURCES})
 
-# Link OpenCV libraries
+# OpenCV libraries
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+# ONNX Runtime
+target_include_directories(${PROJECT_NAME} PUBLIC ${ONNXRUNTIME_INCLUDE_DIR})
+target_link_directories(${PROJECT_NAME} PUBLIC ${ONNXRUNTIME_LIB_DIR})
+target_link_libraries(${PROJECT_NAME} onnxruntime onnxruntime_providers_cuda onnxruntime_providers_shared)
 
 # Include directories
-include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(module, extra)
 
 # Set the output directory for the built executable to the testspace directory located at the same level as CMakeLists.txt
