@@ -17,6 +17,12 @@ void BackendONNXRuntime::init(nlohmann::json init_params)
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+    
+    // CUDA provider check
+    OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0); // CUDA device ID 0
+    if (status != nullptr)
+        throw std::runtime_error("Failed to set CUDA Execution Provider");
+
     session = Ort::Session(env, onnx_path.c_str(), session_options);
 
     // Get input/output tensor type
