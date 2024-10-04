@@ -29,6 +29,8 @@ set(MODULE_SOURCES
     module/backend_opencv_onnx.hpp
     module/backend_opencv_darknet.cpp
     module/backend_opencv_darknet.hpp
+    module/backend_onnxruntime.cpp
+    module/backend_onnxruntime.hpp
     module/postprocessor_yolov5.cpp
     module/postprocessor_yolov5.hpp
     module/postprocessor_yolov8.cpp

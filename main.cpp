@@ -4,7 +4,6 @@
 #include <any>
 
 #include <opencv2/opencv.hpp>
-#include <onnxruntime_cxx_api.h>
 
 #include "module/make_models.hpp"
 
@@ -47,17 +46,7 @@ void draw(const std::vector<DetectedOutput>& detections, cv::Mat img, std::strin
 
 void test_onnxruntime()
 {
-    // Model and Image directories
-    fs::path models_dir = "models";
-    fs::path images_dir = "images";
-
-    // Model files
-    fs::path onnx_file = models_dir / "yolov8" / "yolov8l.onnx";
-    fs::path names_file = models_dir / "yolov8" / "coco.names";
-
-    // Image file
-    fs::path image_file = images_dir / "dog.jpg";
-
+    /*
     // Load class names
     std::vector<std::string> class_names;
     std::ifstream class_file(names_file);
@@ -211,9 +200,46 @@ void test_onnxruntime()
             final_results.push_back(output);
         }
     }
+    */
+    // Model and Image directories
+    fs::path models_dir = "models";
+    fs::path images_dir = "images";
+
+    // Model files
+    fs::path onnx_file = models_dir / "yolov8" / "yolov8l.onnx";
+    fs::path names_file = models_dir / "yolov8" / "coco.names";
+
+    // Image file
+    fs::path image_file = images_dir / "dog.jpg";
+
+    // Load the image
+    cv::Mat img = cv::imread(image_file.string());
+
+    // Convert to Image class
+    Image input;
+    input.width = img.cols;
+    input.height = img.rows;
+    input.chan = img.channels();
+    input.data.resize(input.total());
+    std::memcpy(input.data.data(), img.data, input.data.size());
+
+    // Initialize model
+    json init_param;
+    init_param["onnx_path"] = onnx_file.string();
+    init_param["names_file"] = names_file.string();
+    init_param["confidence_threshold"] = 0.5f;
+    init_param["nms_threshold"] = 0.4f;
+    init_param["inference_width"] = 640;
+    init_param["inference_height"] = 640;
+
+    auto model = make_onnxruntime();
+    model->init(init_param);
+    
+    // Inference and Post Process
+    auto detections = model->run(input);
 
     // Print the outputs
-    for (const auto& output : final_results)
+    for (const auto& output : detections)
     {
         std::cout << "Bounding Box: (" << output.bbox_x << ", " << output.bbox_y << "), "
                   << "Width: " << output.bbox_width << ", Height: " << output.bbox_height << ", "
@@ -222,7 +248,7 @@ void test_onnxruntime()
     }
 
     // Draw and Show
-    draw(final_results, image, "ONNX");
+    draw(detections, img, "ONNXRuntime");
 }
 
 void test_yolov4_darknet()
