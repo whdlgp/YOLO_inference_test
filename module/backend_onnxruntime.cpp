@@ -1,5 +1,7 @@
 #include "backend_onnxruntime.hpp"
 
+#include <iostream>
+
 Ort::Env BackendONNXRuntime::env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "BackendONNXRuntime");
 
 // Initialize the model
@@ -13,15 +15,26 @@ void BackendONNXRuntime::init(nlohmann::json init_params)
     if (!check_and_get(init_params, "inference_height", this->inference_height))
         throw std::invalid_argument("wrong inference_height");
     
+    bool cuda = false, fp16 = false;
+    check_and_get(init_params, "cuda", cuda);
+    check_and_get(init_params, "fp16", fp16);
+
     // Initialize ONNX Runtime
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
     
-    // CUDA provider check
-    OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0); // CUDA device ID 0
-    if (status != nullptr)
-        throw std::runtime_error("Failed to set CUDA Execution Provider");
+    if (cuda)
+    {
+        OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0); // CUDA device ID 0
+        if (status != nullptr) {
+            // CUDA 사용 불가 시 경고 메시지 출력 후 CPU로 대체
+            std::cerr << "Warning: CUDA execution provider is not available. Falling back to CPU." << std::endl;
+            Ort::GetApi().ReleaseStatus(status); // 상태 객체 해제
+        }
+    }
+    if (fp16)
+        session_options.AddConfigEntry("execution_mode", "ORT_ENABLE_FP16");
 
     session = Ort::Session(env, onnx_path.c_str(), session_options);
 

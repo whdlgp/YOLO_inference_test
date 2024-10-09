@@ -76,6 +76,8 @@ void test_onnxruntime()
     init_param["nms_threshold"] = 0.4f;
     init_param["inference_width"] = 640;
     init_param["inference_height"] = 640;
+    init_param["cuda"] = true;
+    init_param["fp16"] = false;
 
     auto model = make_onnxruntime();
     model->init(init_param);

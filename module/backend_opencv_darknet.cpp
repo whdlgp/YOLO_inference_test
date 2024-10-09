@@ -14,11 +14,29 @@ void BackendOpenCVDarknet::init(nlohmann::json init_params)
         throw std::invalid_argument("wrong inference_width");
     if (!check_and_get(init_params, "inference_height", this->inference_height))
         throw std::invalid_argument("wrong inference_height");
+
+    bool cuda = false, fp16 = false;
+    check_and_get(init_params, "cuda", cuda);
+    check_and_get(init_params, "fp16", fp16);
     
     // Load Net (OpenCV DNN)
     net = cv::dnn::readNetFromDarknet(config_path, weights_path);
-    net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
-    net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    if (cuda)
+    {
+        net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+        if (fp16)
+            net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
+        else
+            net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    }
+    else
+    {
+        net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
+        if (fp16)
+            net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU_FP16);
+        else
+            net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    }
 }
 
 // Perform inference
