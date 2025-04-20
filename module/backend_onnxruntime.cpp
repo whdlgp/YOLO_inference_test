@@ -15,26 +15,43 @@ void BackendONNXRuntime::init(nlohmann::json init_params)
     if (!check_and_get(init_params, "inference_height", this->inference_height))
         throw std::invalid_argument("wrong inference_height");
     
-    bool cuda = false, fp16 = false;
-    check_and_get(init_params, "cuda", cuda);
-    check_and_get(init_params, "fp16", fp16);
+    bool use_tensorrt = false, use_fp16 = false, fallback_cuda = false;
+    check_and_get(init_params, "tensorrt", use_tensorrt);
+    check_and_get(init_params, "fp16",     use_fp16);
+    check_and_get(init_params, "cuda",     fallback_cuda);
 
     // Initialize ONNX Runtime
     Ort::SessionOptions session_options;
-    session_options.SetIntraOpNumThreads(1);
-    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
     
-    if (cuda)
+    // Search available providers
+    auto providers = Ort::GetAvailableProviders();
+
+    // TensorRT provider
+    if (use_tensorrt &&
+        std::find(providers.begin(), providers.end(), "TensorrtExecutionProvider") != providers.end())
     {
-        OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0); // CUDA device ID 0
-        if (status != nullptr) {
-            // CUDA 사용 불가 시 경고 메시지 출력 후 CPU로 대체
-            std::cerr << "Warning: CUDA execution provider is not available. Falling back to CPU." << std::endl;
-            Ort::GetApi().ReleaseStatus(status); // 상태 객체 해제
+        const auto& api = Ort::GetApi();
+        OrtTensorRTProviderOptionsV2* trt_opts = nullptr;
+        api.CreateTensorRTProviderOptions(&trt_opts);
+
+        std::vector<const char*> keys, values;
+        if (use_fp16)
+        {
+            keys .push_back("trt_fp16_enable");
+            values.push_back("1");
         }
+        api.UpdateTensorRTProviderOptions(trt_opts, keys.data(), values.data(), keys.size());
+        session_options.AppendExecutionProvider_TensorRT_V2(*trt_opts);
+        api.ReleaseTensorRTProviderOptions(trt_opts);
     }
-    if (fp16)
-        session_options.AddConfigEntry("execution_mode", "ORT_ENABLE_FP16");
+
+    // CUDA fallback
+    if (fallback_cuda &&
+        std::find(providers.begin(), providers.end(), "CUDAExecutionProvider") != providers.end())
+    {
+        OrtCUDAProviderOptions cuda_opts;
+        session_options.AppendExecutionProvider_CUDA(cuda_opts);
+    }
 
     session = Ort::Session(env, onnx_path.c_str(), session_options);
 

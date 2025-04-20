@@ -77,6 +77,7 @@ void test_onnxruntime()
     init_param["inference_width"] = 640;
     init_param["inference_height"] = 640;
     init_param["cuda"] = true;
+    init_param["tensorrt"] = false;
     init_param["fp16"] = false;
 
     auto model = make_onnxruntime();
