@@ -21,7 +21,6 @@ void BackendONNXRuntime::init(nlohmann::json init_params)
     check_and_get(init_params, "cuda",     fallback_cuda);
 
     // Initialize ONNX Runtime
-    Ort::SessionOptions session_options;
     
     // Search available providers
     auto providers = Ort::GetAvailableProviders();
@@ -55,21 +54,48 @@ void BackendONNXRuntime::init(nlohmann::json init_params)
 
     session = Ort::Session(env, onnx_path.c_str(), session_options);
 
-    // Get input/output tensor type
-    if (session.has_value())
+    size_t input_count = session.GetInputCount();
+    input_names.resize(input_count);
+    input_names_cstr.resize(input_count);
+    input_shapes.resize(input_count);
+    for (size_t i = 0; i < input_count; i++)
     {
-        input_type_info = session->GetInputTypeInfo(0);
-        output_type_info = session->GetOutputTypeInfo(0);
+        Ort::AllocatedStringPtr name = session.GetInputNameAllocated(i, Ort::AllocatorWithDefaultOptions{});
+        input_names[i] = name.get();
+        input_names_cstr[i] = input_names[i].c_str();
+
+        auto info = session.GetInputTypeInfo(i);
+        input_shapes[i] = info.GetTensorTypeAndShapeInfo().GetShape();
     }
 
-    if (input_type_info.has_value() && output_type_info.has_value())
+    size_t output_count = session.GetOutputCount();
+    output_names.resize(output_count);
+    output_names_cstr.resize(output_count);
+    output_shapes.resize(output_count);
+    for (size_t i = 0; i < output_count; i++)
     {
-        input_tensor_type = input_type_info->GetTensorTypeAndShapeInfo().GetElementType();
-        output_tensor_type = output_type_info->GetTensorTypeAndShapeInfo().GetElementType();
+        Ort::AllocatedStringPtr name = session.GetOutputNameAllocated(i, Ort::AllocatorWithDefaultOptions{});
+        output_names[i] = name.get();
+        output_names_cstr[i] = output_names[i].c_str();
+
+        auto info = session.GetOutputTypeInfo(i);
+        output_shapes[i] = info.GetTensorTypeAndShapeInfo().GetShape();
     }
 
-    if (session.has_value() && input_type_info.has_value() && output_type_info.has_value())
-        init_onnxruntime = true;
+    mem_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+
+    // Currently, Onlt support one input
+    const std::vector<int64_t>& shape = input_shapes[0];
+    size_t total_size = 1;
+    for (auto s : shape) total_size *= s;
+
+    reusable_input_data.resize(total_size);
+    reusable_input_tensor = Ort::Value::CreateTensor<float>(
+        mem_info, reusable_input_data.data(), total_size, shape.data(), shape.size());
+
+    run_options = Ort::RunOptions{ nullptr };
+
+    init_onnxruntime = true;
 }
 
 // Perform inference
@@ -93,34 +119,30 @@ std::vector<Matrix<float>> BackendONNXRuntime::infer(Image& input)
     // Preprocess the image
     std::vector<float> preprocessed = RGB2NCHW(input.data, input.width, input.height, input.chan, inference_width, inference_height);
 
-    // Prepare input tensor
-    std::vector<int64_t> input_shape = {1, 3, inference_height, inference_width}; // NCHW format
-    const size_t input_tensor_size = inference_width * inference_height * 3;
-
-    // Create input tensor object from data values
-    Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-    Ort::Value input_tensor = Ort::Value::CreateTensor<float>(memory_info, preprocessed.data(), input_tensor_size, input_shape.data(), input_shape.size());
+    // Copy to reusable memory
+    std::copy(preprocessed.begin(), preprocessed.end(), reusable_input_data.begin());
 
     // Run inference
-    Ort::AllocatedStringPtr input_name = session->GetInputNameAllocated(0, allocator);
-    Ort::AllocatedStringPtr output_name = session->GetOutputNameAllocated(0, allocator);
-    std::vector<const char*> input_names = {input_name.get()};
-    std::vector<const char*> output_names = {output_name.get()};
-    auto output_tensors = session->Run(Ort::RunOptions{nullptr}, input_names.data(), &input_tensor, 1, output_names.data(), 1);
+    auto output_tensors = session.Run(run_options,
+        input_names_cstr.data(), &reusable_input_tensor, 1,
+        output_names_cstr.data(), output_names_cstr.size());
 
     // Get output tensor shape
-    Ort::Value& output_tensor = output_tensors.front(); // Assuming single output
-    Ort::TensorTypeAndShapeInfo output_tensor_info = output_tensor.GetTensorTypeAndShapeInfo();
-    std::vector<int64_t> output_shape = output_tensor_info.GetShape();
+    // (Assuming single output)
+    Ort::Value& output_tensor = output_tensors.front(); 
+    std::vector<int64_t> output_shape = output_shapes[0];
 
-    // Convert the output tensor to vector of floats
+    // Prepare result
     std::vector<Matrix<float>> results(1);
-    float* output_data = output_tensor.GetTensorMutableData<float>();
-    results[0].data.assign(output_data, output_data + output_tensor_info.GetElementCount());
 
     // Copy Shape
-    for (int64_t elem : output_shape)
-        results[0].shape.push_back(elem);
+    size_t total_size = 1;
+    for (auto s : output_shape) total_size *= s;
+    for (auto s : output_shape) results[0].shape.push_back(s);
+
+    // Convert the output tensor to vector of floats
+    float* output_data = output_tensor.GetTensorMutableData<float>();
+    results[0].data.assign(output_data, output_data + total_size);
     
     return results;
 }
