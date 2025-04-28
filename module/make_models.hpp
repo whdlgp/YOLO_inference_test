@@ -5,6 +5,7 @@
 // Backend import
 #include "backend_opencv_darknet.hpp"
 #include "backend_opencv_onnx.hpp"
+#include "backend_onnxruntime.hpp"
 
 // Post Processor import
 #include "postprocessor_darknet.hpp"
@@ -82,6 +83,18 @@ inline std::shared_ptr<DetectionBase> make_yolov10()
 
     // Post Processor
     std::unique_ptr<PostProcessor<float>> postproc = std::make_unique<PostProcessorYOLOv10>();
+
+    return std::make_shared<DetectionBase>(std::move(backend), std::move(postproc));
+}
+
+// Make ONNXRuntime model(TODO)
+inline std::shared_ptr<DetectionBase> make_onnxruntime()
+{
+    // Backend
+    std::unique_ptr<BackendBase<float>> backend = std::make_unique<BackendONNXRuntime>();
+
+    // Post Processor
+    std::unique_ptr<PostProcessor<float>> postproc = std::make_unique<PostProcessorYOLOv8>();
 
     return std::make_shared<DetectionBase>(std::move(backend), std::move(postproc));
 }
